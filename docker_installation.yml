@@ -20,7 +20,7 @@
       state: present
   - name: Setup stable repository
     apt_repository:
-      repo: deb https://download.docker.com/linux/ubuntu eoan stable
+      repo: "deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }}  stable"
       state: present
   - name: Install the latest docker community engine package
     apt:
@@ -31,3 +31,11 @@
       - docker-compose
       state: latest
       update_cache: yes
+
+  - name: Add user to the docker group
+    become: true
+    user:
+      name: ubuntu
+      shell: /bin/bash 
+      groups: docker
+      append: yes
