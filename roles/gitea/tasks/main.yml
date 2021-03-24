@@ -1,7 +1,4 @@
 ---
-- name: testing 
-  ping:
-
 - name: install prerequisites
   become: true
   ansible.builtin.apt:

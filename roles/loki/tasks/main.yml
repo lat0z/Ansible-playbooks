@@ -1,0 +1,35 @@
+---
+- name: Install packages needed for loki
+  become: true
+  apt:
+    pkg:
+    - unzip
+    state: latest
+    update_cache: true
+
+- name: Create Loki user 
+  become: true 
+  ansible.builtin.user:
+    name: loki
+    shell: /bin/bash 
+    system: yes
+    state: present
+    comment: Loki server owner
+
+- name: Download the loki package to /usr/local/bin 
+  become: true 
+  ansible.builtin.unarchive: 
+    src: "https://github.com/grafana/loki/releases/download/v{{ version }}/loki-{{ arch }}.zip" 
+    dest: /usr/local/bin/
+    owner: loki
+    group: loki
+    remote_src: yes 
+
+- name: Download the promtail package to /usr/local/bin
+  become: true
+  ansible.builtin.unarchive:
+    src: "https://github.com/grafana/loki/releases/download/v{{ version }}/promtail-{{ arch }}.zip"
+    dest: /usr/local/bin/
+    owner: loki
+    group: loki
+    remote_src: yes
