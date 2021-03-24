@@ -1,0 +1,5 @@
+---
+- hosts: gitea_installation
+  gather_facts: false
+  roles:
+  - gitea

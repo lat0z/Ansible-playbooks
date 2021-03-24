@@ -1,0 +1,58 @@
+---
+- name: install prerequisites
+  become: true
+  ansible.builtin.apt:
+    pkg: 
+    - sqlite3
+    - git 
+    update_cache: true
+    state: latest
+
+- name: Create git user 
+  become: true 
+  ansible.builtin.user: 
+    name: git
+    shell: /bin/bash
+    system: yes
+    state: present
+    comment: Git version control
+
+- name: Download the gitea package
+  become: yes
+  ansible.builtin.get_url: 
+    url: "https://dl.gitea.io/gitea/{{ version }}/gitea-{{ version }}-linux-arm64"
+    dest: /usr/local/bin/gitea
+    mode: '0755'
+    owner: git
+    group: git
+
+- name: Create the directories needed 
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.d }}"
+    state: directory
+    owner: "{{ item.u }}"
+    group: "{{ item.g }}"
+    mode:  "{{ item.m }}"
+  with_items:
+  - { d: '/var/lib/gitea/custom',   u: 'root', g: 'root', m: '0755'}
+  - { d: '/var/lib/gitea/data',     u: 'git', g: 'git', m: '0755'}
+  - { d: '/var/lib/gitea/indexers', u: 'git', g: 'git', m: '0755'}
+  - { d: '/var/lib/gitea/log',      u: 'git', g: 'git', m: '0755'}
+  - { d: '/var/lib/gitea/public',   u: 'root', g: 'root', m: '0755'}
+  - { d: '/etc/gitea',              u: 'root', g: 'git', m: '0770' }
+
+- name: Download the gitea systemd service
+  become: yes
+  ansible.builtin.get_url: 
+    url: "https://raw.githubusercontent.com/go-gitea/gitea/master/contrib/systemd/gitea.service"
+    dest: /etc/systemd/system/gitea.service
+    owner: root
+    group: root
+
+- name: Make sure the gitea service is running 
+  become: true 
+  ansible.builtin.systemd:
+    name: gitea.service
+    state: started 
+    enabled: yes
