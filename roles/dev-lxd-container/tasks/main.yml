@@ -1,0 +1,80 @@
+---
+- name: Get the current directory path 
+  shell: "pwd"
+  register: output
+
+- name: Set directory as target path
+  set_fact: 
+    pwd: "{{ output.stdout }}"
+
+- name: Create a starter container 
+  command: "lxc launch images:{{ baseimage }} {{ basename }}"
+  register: output 
+
+- name: Delay to ensure the container has internet access 
+  wait_for:
+    timeout: 30 
+  delegate_to: localhost
+
+- name: update the repository cache on the container 
+  shell: "lxc exec {{ basename }} -- yum update"
+
+- name: Install openssh on the container using the lxc cli
+  shell: "lxc exec {{ basename }} -- yum install -y openssh-server"
+
+- name: Configure the sshd_config file
+  shell: "lxc file pull {{ basename }}/etc/ssh/sshd_config {{ pwd }}"
+
+- name: checking for the configuration file
+  wait_for: 
+    path: sshd_config
+
+- name: Configure the container for root ssh 
+  lineinfile:
+    path: ./sshd_config
+    regexp: "^PermitRootLogin yes"
+    line: "PermitRootLogin yes"
+
+- name: Push the ssh file
+  command: "lxc file push {{ pwd }}/sshd_config {{ basename }}/etc/ssh/sshd_config"
+
+- name: Start the sshd service
+  command: "lxc exec {{ basename }} -- systemctl start sshd"
+
+- name: Retrieve the target container IP
+  shell: "lxc exec {{ basename }} -- hostname -I | awk '{ print $1}'"
+  #command: "lxc query /1.0/instances/{{ basename }}/state"
+  register: out
+
+- name: Set the ip address of the container 
+  set_fact: 
+    targetIp: "{{ out.stdout }}"
+
+- name: delete older temporqal keys 
+  file: 
+    path: "{{ pwd }}/{{ item }}"
+    state: absent
+  loop:
+    - key.rsa
+    - key.rsa.pub
+
+- name: Create temporal ssh key 
+  shell: "ssh-keygen -t rsa -P '' -f {{ pwd }}/key.rsa"
+  ignore_errors: true
+
+- name: Setup the ssh access to contaier 
+  shell: "lxc exec {{ basename }} -- mkdir -p /root/.ssh"
+
+- name: Create authorized_keys 
+  shell: "lxc exec {{ basename }} -- touch /root/.ssh/authorized_keys"
+
+- name: Copy temporal key to the container
+  command: "lxc file push {{ pwd }}/key.rsa.pub {{ basename }}/root/.ssh/authorized_keys"
+
+- name: Fix ownership to the authorized_keys file 
+  command: "lxc exec {{ basename }} -- chown root:root /root/.ssh/authorized_keys"
+
+- name: Create the custom host 
+  template:
+    src: "host.j2"
+    dest: "{{ pwd }}/host" 
