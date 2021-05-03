@@ -1,0 +1,14 @@
+---
+- name: Add the official saltstack key (ubuntu)
+  #setting up the 20.04 repo, this is the latest from saltstack
+  become: true
+  ansible.builtin.apt_key:
+    url: https://repo.saltproject.io/py3/ubuntu/20.04/amd64/latest/salt-archive-keyring.gpg
+    state: present
+
+- name: Setup stable repository (ubuntu)
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "deb https://repo.saltproject.io/py3/ubuntu/20.04/amd64/latest focal main"
+    state: present
+

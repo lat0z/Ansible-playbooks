@@ -1,4 +1,6 @@
 ---
+#example: ansible-playbook test.yml --extra-vars "baseimage=ubuntu/21.04 pkg_mngr=apt" -vv
+
 - name: Get the current directory path 
   shell: "pwd"
   register: output
@@ -8,7 +10,7 @@
     pwd: "{{ output.stdout }}"
 
 - name: Create a starter container 
-  command: "lxc launch images:{{ baseimage }} {{ basename }}"
+  command: "lxc launch images:{{ baseimage }} {{ basename }} -p def1"
   register: output 
 
 - name: Delay to ensure the container has internet access 
@@ -17,10 +19,10 @@
   delegate_to: localhost
 
 - name: update the repository cache on the container 
-  shell: "lxc exec {{ basename }} -- yum update"
+  shell: "lxc exec {{ basename }} -- {{ pkg_mngr }} update"
 
 - name: Install openssh on the container using the lxc cli
-  shell: "lxc exec {{ basename }} -- yum install -y openssh-server"
+  shell: "lxc exec {{ basename }} -- {{ pkg_mngr }} install -y openssh-server"
 
 - name: Configure the sshd_config file
   shell: "lxc file pull {{ basename }}/etc/ssh/sshd_config {{ pwd }}"
@@ -50,17 +52,19 @@
   set_fact: 
     targetIp: "{{ out.stdout }}"
 
-- name: delete older temporqal keys 
+- name: delete older temporal keys 
   file: 
     path: "{{ pwd }}/{{ item }}"
     state: absent
   loop:
     - key.rsa
     - key.rsa.pub
+  when: preserve==false
 
 - name: Create temporal ssh key 
   shell: "ssh-keygen -t rsa -P '' -f {{ pwd }}/key.rsa"
   ignore_errors: true
+  when: preserve==false
 
 - name: Setup the ssh access to contaier 
   shell: "lxc exec {{ basename }} -- mkdir -p /root/.ssh"

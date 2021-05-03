@@ -1,0 +1,4 @@
+---
+package: salt-master
+master: salt-master
+

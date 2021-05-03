@@ -1,0 +1,21 @@
+---
+- name: Install packages needed for saltstack
+  become: true 
+  ansible.builtin.package:  
+    name:
+    - curl
+    - gnupg 
+    state: latest 
+
+#Include the play according the distribution
+- include: apt_tasks.yml
+  when: ansible_facts["distribution"]=="Ubuntu"
+- include: rpm_tasks.yml
+  when: ansible_facts["distribution"]!="Ubuntu"
+
+- name: Install the latest saltstack package
+  become: true 
+  ansible.builtin.package: 
+    name: 
+    - "{{ package }}"
+    state: latest

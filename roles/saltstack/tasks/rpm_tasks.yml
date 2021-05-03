@@ -1,0 +1,13 @@
+---
+- name: Add the official saltstack key (centos/rhel)
+  become: true
+  ansible.builtin.rpm_key:
+    key: https://repo.saltproject.io/py3/redhat/7/x86_64/latest/SALTSTACK-GPG-KEY.pub
+    state: present
+
+- name: Setup stable repository (centos/rhel)
+  become: true 
+  ansible.builtin.get_url:
+    url: "https://repo.saltproject.io/py3/redhat/7/x86_64/latest.repo"
+    dest: /etc/yum.repos.d/salt.repo
+

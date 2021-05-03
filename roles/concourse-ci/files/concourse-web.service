@@ -1,0 +1,22 @@
+[Unit]
+Description=Prepare concourse web Service
+After=postgresql.service
+
+[Service]
+User=root
+Restart=on-failure
+Environment=CONCOURSE_ADD_LOCAL_USER=test:test
+Environment=CONCOURSE_MAIN_TEAM_LOCAL_USER=test
+Environment=CONCOURSE_SESSION_SIGNING_KEY=/usr/local/concourse/bin/session_signing_key
+Environment=CONCOURSE_TSA_HOST_KEY=/usr/local/concourse/bin/tsa_host_key
+Environment=CONCOURSE_TSA_AUTHORIZED_KEYS=/usr/local/concourse/bin/authorized_worker_keys
+Environment=CONCOURSE_POSTGRES_socket=/var/run/postgresql
+Environment=CONCOURSE_POSTGRES_DATABASE=atc
+Environment=CONCOURSE_POSTGRES_USER=postgres
+Environment=CONCOURSE_POSTGRES_PASSWORD=test
+Environment=CONCOURSE_EXTERNAL_URL=http://concourse.lan:8080
+
+ExecStart=/usr/local/concourse/bin/concourse web 
+
+[Install]
+WantedBy=multi-user.target

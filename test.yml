@@ -1,5 +1,9 @@
 ---
-- hosts: gitea_installation
-  gather_facts: false
+- hosts: target 
+  connection: ssh
+  gather_facts: true
   roles:
-  - gitea
+    - concourse-ci
+    #    - docker
+#    - saltstack
+# - dev-lxd-container 
