@@ -1,5 +1,5 @@
 ---
-- hosts: gitea_installation
+- hosts: prometheus
   gather_facts: false
   roles:
-  - gitea
+  - prometheus

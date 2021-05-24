@@ -3,9 +3,10 @@
   become: true 
   ansible.builtin.user: 
     name: prometheus
-    shell: /bin/false
+    shell: /bin/bash
     system: yes
     state: present
+    group: prometheus
     comment: Prometheus owner
 
 - name: Download the prometheus package
