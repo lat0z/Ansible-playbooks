@@ -1,0 +1,77 @@
+---
+- name: install prerequisites
+  become: true
+  ansible.builtin.apt:
+    pkg: 
+    - postgresql
+    - postgresql 
+    update_cache: true
+    state: latest
+
+- name: Make sure the postgres service is running
+  become: true
+  ansible.builtin.systemd:
+    name: postgresql.service
+    state: started
+    enabled: yes      
+
+- name: Create the posgres user and the database
+  become: true 
+  become_user: postgres
+  shell: "createuser $(whoami); createdb --owner=$(whoami) atc"
+  ignore_errors: true
+  args:
+    chdir: ~
+
+- name: Download the concourse package
+  tags: skip
+  become: yes
+  ansible.builtin.unarchive: 
+    src: "https://github.com/concourse/concourse/releases/download/v{{ version }}/concourse-{{ version }}-{{ arch }}.tgz"
+    dest: /usr/local
+    mode: '0755'
+    remote_src: true
+
+- name: Create the directories needed
+  become: true
+  ansible.builtin.file:
+    path: "/opt/concourse/worker"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode:  "0755"
+
+- name: Keys generation
+  tags: skip
+  become: true
+  shell: 
+    cmd: "{{ item }}"
+    chdir: /usr/local/concourse/bin/
+  with_items: 
+  - "./concourse generate-key -t rsa -f ./session_signing_key"
+  - "./concourse generate-key -t ssh -f ./tsa_host_key"
+  - "./concourse generate-key -t ssh -f ./worker_key"
+  - "cp worker_key.pub authorized_worker_keys"
+
+- name: Copy the  concourse systemd services
+  become: true 
+  ansible.builtin.copy: 
+    src: "{{ item }}"
+    dest: /etc/systemd/system/
+    owner: root
+    group: root
+    remote_src: no
+  with_items:
+  - "concourse-web.service"
+  - "concourse-worker.service"
+
+- name: Make sure the concourse-web service is running 
+  become: true 
+  ansible.builtin.systemd:
+    name: concourse-web.service
+    state: started 
+    enabled: yes
+    daemon_reload: yes
+  with_items:
+  - "concourse-web.service"
+  - "concourse-worker.service"

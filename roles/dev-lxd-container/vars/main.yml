@@ -1,3 +1,6 @@
 ---
 baseimage: "centos/7"
 basename: "target"
+pkg_mngr: "yum"
+profile: "default"
+preserve: false
