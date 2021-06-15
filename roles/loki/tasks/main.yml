@@ -1,8 +1,8 @@
 ---
 - name: Install packages needed for loki
   become: true
-  apt:
-    pkg:
+  ansible.builtin.yum:
+    name:
     - unzip
     state: latest
     update_cache: true
@@ -16,20 +16,49 @@
     state: present
     comment: Loki server owner
 
-- name: Download the loki package to /usr/local/bin 
+- name: Make sure the needed directories exist in the system 
   become: true 
+  ansible.builtin.file: 
+    path: /etc/loki/
+    owner: loki
+    group: loki 
+    state: directory 
+    recurse: yes
+
+- name: Download the loki package to /usr/local/bin 
+  become: true
+  tags: loki 
   ansible.builtin.unarchive: 
     src: "https://github.com/grafana/loki/releases/download/v{{ version }}/loki-{{ arch }}.zip" 
-    dest: /usr/local/bin/
+    dest: /etc/loki/
     owner: loki
     group: loki
     remote_src: yes 
 
 - name: Download the promtail package to /usr/local/bin
   become: true
+  tags: promtail
   ansible.builtin.unarchive:
     src: "https://github.com/grafana/loki/releases/download/v{{ version }}/promtail-{{ arch }}.zip"
-    dest: /usr/local/bin/
+    dest: /etc/loki/
     owner: loki
     group: loki
     remote_src: yes
+
+- name: Download loki configuration file
+  become: true
+  tags: loki 
+  ansible.builtin.get_url: 
+    url: "https://raw.githubusercontent.com/grafana/loki/master/cmd/loki/loki-local-config.yaml"
+    dest: /etc/loki/
+    owner: loki
+    group: loki
+
+- name: Download promtail configuration file
+  become: true 
+  tags: promtail
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/grafana/loki/main/clients/cmd/promtail/promtail-local-config.yaml"
+    dest: /etc/loki/
+    owner: loki
+    group: loki
