@@ -1,0 +1,24 @@
+---
+- name: Ensure group alertmanager exists
+  become: true
+  ansible.builtin.group:
+    name: alertmanager
+    system: yes
+    state: present
+
+- name: Create alertmanager user
+  become: true
+  ansible.builtin.user:
+    name: alertmanager
+    shell: /bin/bash
+    system: yes
+    state: present
+    group: alertmanager
+    comment: alertmanager owner
+
+- name: Download the node_exporter package
+  become: true
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/alertmanager/releases/download/v{{ version }}/alertmanager-{{ version }}.{{ arch }}.tar.gz"
+    dest: /tmp #/usr/local/bin/prometheus
+    remote_src: yes
