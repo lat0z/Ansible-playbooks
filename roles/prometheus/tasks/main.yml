@@ -1,7 +1,14 @@
 ---
-- name: Create Prometheus user 
-  become: true 
-  ansible.builtin.user: 
+- name: Ensure group prometheus exists
+  become: true
+  ansible.builtin.group:
+    name: prometheus
+    system: yes
+    state: present
+
+- name: Create Prometheus user
+  become: true
+  ansible.builtin.user:
     name: prometheus
     shell: /bin/bash
     system: yes
@@ -11,7 +18,7 @@
 
 - name: Download the prometheus package
   become: true
-  ansible.builtin.unarchive: 
+  ansible.builtin.unarchive:
     src: "https://github.com/prometheus/prometheus/releases/download/v{{ version }}/prometheus-{{ version }}.{{ arch }}.tar.gz"
     dest: /tmp #/usr/local/bin/prometheus
     remote_src: yes
@@ -21,50 +28,50 @@
   ansible.builtin.copy:
     src: "/tmp/prometheus-{{ version }}.{{ arch }}/{{ item.f }}"
     dest: "/usr/local/bin/"
-    owner: '{{ item.u }}'
-    mode: '0755'
+    owner: "{{ item.u }}"
+    mode: "0755"
     remote_src: yes
   with_items:
-  - { f: 'prometheus', u: 'prometheus' } 
-  - { f: 'promtool', u: 'root'} 
-    
+    - { f: "prometheus", u: "prometheus" }
+    - { f: "promtool", u: "root" }
+
 - name: Make sure the needed directories exist in the system
   become: true
-  ansible.builtin.file: 
-    path: '{{ item }}'
+  ansible.builtin.file:
+    path: "{{ item }}"
     owner: prometheus
     group: prometheus
     state: directory
     recurse: yes
   with_items:
-  - /etc/prometheus/
-  - /data/prometheus/
-   
-- name: Copy the prometheus internal files to /etc/prometheus 
+    - /etc/prometheus/
+    - /data/prometheus/
+
+- name: Copy the prometheus internal files to /etc/prometheus
   become: true
   ansible.builtin.copy:
-    src: "/tmp/prometheus-{{ version }}.{{ arch }}/" 
+    src: "/tmp/prometheus-{{ version }}.{{ arch }}/"
     dest: /etc/prometheus
     owner: prometheus
     group: prometheus
     remote_src: yes
-  with_items: 
-  - console_libraries
-  - consoles
-  - prometheus.yml
+  with_items:
+    - console_libraries
+    - consoles
+    - prometheus.yml
 
-- name: Copy the systemd service 
-  become: true 
-  ansible.builtin.copy: 
+- name: Copy the systemd service
+  become: true
+  ansible.builtin.copy:
     src: prometheus.service
     dest: /etc/systemd/system/
     owner: root
     group: root
     remote_src: no
 
-- name: Make sure the prometheus service is running 
-  become: true 
+- name: Make sure the prometheus service is running
+  become: true
   ansible.builtin.systemd:
     name: prometheus.service
-    state: started 
+    state: started
     enabled: yes
