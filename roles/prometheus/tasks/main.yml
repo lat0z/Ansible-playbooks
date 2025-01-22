@@ -69,6 +69,10 @@
     group: root
     remote_src: no
 
+- name: Just force systemd to reread configs
+  ansible.builtin.systemd:
+    daemon_reload: true
+
 - name: Make sure the prometheus service is running
   become: true
   ansible.builtin.systemd:

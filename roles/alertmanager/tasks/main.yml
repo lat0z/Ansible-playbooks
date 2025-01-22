@@ -22,3 +22,58 @@
     src: "https://github.com/prometheus/alertmanager/releases/download/v{{ version }}/alertmanager-{{ version }}.{{ arch }}.tar.gz"
     dest: /tmp #/usr/local/bin/prometheus
     remote_src: yes
+
+- name: Copy the alertmanager binaries to /usr/local/bin
+  become: true
+  ansible.builtin.copy:
+    src: "/tmp/alertmanager-{{ version }}.{{ arch }}/{{ item.f }}"
+    dest: "/usr/local/bin/"
+    owner: "{{ item.u }}"
+    group: "{{ item.u }}"
+    mode: "0755"
+    remote_src: yes
+  with_items:
+    - { f: "alertmanager", u: "prometheus" }
+    - { f: "amtool", u: "root" }
+
+- name: Make sure the needed directories exist in the system
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: alertmanager
+    group: alertmanager
+    state: directory
+    recurse: yes
+  with_items:
+    - /etc/alertmanager/
+
+- name: Copy the alertmanager internal files to /etc/alertmanager
+  become: true
+  ansible.builtin.copy:
+    src: "/tmp/alertmanager-{{ version }}.{{ arch }}/"
+    dest: /etc/alertmanager
+    owner: alertmanager
+    group: alertmanager
+    remote_src: yes
+  with_items:
+    - alertmanager.yml
+
+- name: Copy the systemd service
+  become: true
+  ansible.builtin.copy:
+    src: alertmanager.service
+    dest: /etc/systemd/system/
+    owner: root
+    group: root
+    remote_src: no
+
+- name: Just force systemd to reread configs
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Make sure the alertmanager service is running
+  become: true
+  ansible.builtin.systemd:
+    name: alertmanager.service
+    state: started
+    enabled: yes
