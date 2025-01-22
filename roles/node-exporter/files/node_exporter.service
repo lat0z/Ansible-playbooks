@@ -1,0 +1,20 @@
+[Unit]
+Description=Node Exporter
+Wants=network-online.target
+Requires=node_exporter.socket
+
+[Service]
+Type=simple
+User=node_exporter
+group=node_exporter
+RestartSec=30
+StartLimitIntervalSec=15
+StartLimitBurst=1
+ExecStart=/usr/local/bin/node_exporrter \
+  --web.listen-address=0.0.0.0:9100 \
+  --web.telemetry-path="/metrics"
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

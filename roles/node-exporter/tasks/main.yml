@@ -1,0 +1,24 @@
+---
+- name: Ensure group node_exporter exists
+  become: true
+  ansible.builtin.group:
+    name: node_exporter
+    system: yes
+    state: present
+
+- name: Create node_exporter user
+  become: true
+  ansible.builtin.user:
+    name: node_exporter
+    shell: /bin/bash
+    system: yes
+    state: present
+    group: node_exporter
+    comment: node_exporter owner
+
+- name: Download the node_exporter package
+  become: true
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v{{ version }}/node_exporter-{{ version }}.{{ arch }}.tar.gz"
+    dest: /tmp #/usr/local/bin/prometheus
+    remote_src: yes
