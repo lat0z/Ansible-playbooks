@@ -6,7 +6,7 @@ Requires=node_exporter.socket
 [Service]
 Type=simple
 User=node_exporter
-group=node_exporter
+Group=node_exporter
 RestartSec=30
 StartLimitIntervalSec=15
 StartLimitBurst=1
