@@ -44,14 +44,14 @@
     group: root
     remote_src: no
 
-# - name: Copy the node_exporter socket
-#   become: true
-#   ansible.builtin.copy:
-#     src: node_exporter.socket
-#     dest: /etc/systemd/system/
-#     owner: root
-#     group: root
-#     remote_src: no
+- name: Copy the node_exporter socket
+  become: true
+  ansible.builtin.copy:
+    src: node_exporter.socket
+    dest: /etc/systemd/system/
+    owner: root
+    group: root
+    remote_src: no
 
 - name: Make sure the node_exporter service is running
   become: true
